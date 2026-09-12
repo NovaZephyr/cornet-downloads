@@ -32,12 +32,21 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi", "appimage", "deb", "apk"],
+    "targets": ["nsis", "msi", "appimage", "deb"],
     "publisher": "NovaZephyr",
     "copyright": "© Cornet",
-    "shortDescription": "Cornet desktop and mobile app",
+    "shortDescription": "Cornet desktop application",
     "longDescription": "Cornet application for Windows, Linux and Android.",
     "category": "SocialNetworking",
-    "icon": ["icons/icon.svg"]
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "android": {
+      "minSdkVersion": 24,
+      "versionCode": 1000000
+    }
   }
 }
