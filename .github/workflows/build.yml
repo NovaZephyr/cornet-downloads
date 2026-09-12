@@ -135,52 +135,39 @@ jobs:
         run: |
           set -euo pipefail
 
+          for secret_name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!secret_name:-}" ]; then
+              echo "::error::Required Android signing secret $secret_name is not configured."
+              exit 1
+            fi
+          done
+
           UNSIGNED_APK=$(find src-tauri/gen/android/app/build/outputs/apk -type f -name '*-unsigned.apk' | head -n 1)
           if [ -z "$UNSIGNED_APK" ]; then
-            echo "No unsigned APK was produced"
+            echo "::error::No unsigned Android APK was produced"
             find src-tauri/gen/android/app/build/outputs/apk -type f -print || true
             exit 1
           fi
 
           BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          KEYSTORE="$RUNNER_TEMP/cornet-release.jks"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
+
           mkdir -p release-assets/android
-
-          if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ]; then
-            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/cornet-release.jks"
-            KEYSTORE="$RUNNER_TEMP/cornet-release.jks"
-            STORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD"
-            KEY_ALIAS="$ANDROID_KEY_ALIAS"
-            KEY_PASSWORD="$ANDROID_KEY_PASSWORD"
-            echo "Using configured Android release keystore"
-          else
-            echo "ANDROID_KEYSTORE_* secrets are not configured; using a temporary debug key for this build."
-            keytool -genkeypair -v \
-              -keystore "$RUNNER_TEMP/cornet-debug.jks" \
-              -storepass android \
-              -keypass android \
-              -alias androiddebugkey \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -dname "CN=Android Debug,O=Cornet,C=PE"
-            KEYSTORE="$RUNNER_TEMP/cornet-debug.jks"
-            STORE_PASSWORD=android
-            KEY_ALIAS=androiddebugkey
-            KEY_PASSWORD=android
-          fi
-
           ALIGNED_APK="$RUNNER_TEMP/cornet-aligned.apk"
           SIGNED_APK="release-assets/android/Cornet-Android.apk"
 
           "$BUILD_TOOLS/zipalign" -P 16 -f 4 "$UNSIGNED_APK" "$ALIGNED_APK"
           "$BUILD_TOOLS/apksigner" sign \
             --ks "$KEYSTORE" \
-            --ks-pass "pass:$STORE_PASSWORD" \
-            --ks-key-alias "$KEY_ALIAS" \
-            --key-pass "pass:$KEY_PASSWORD" \
+            --ks-pass "pass:$ANDROID_KEYSTORE_PASSWORD" \
+            --ks-key-alias "$ANDROID_KEY_ALIAS" \
+            --key-pass "pass:$ANDROID_KEY_PASSWORD" \
             --out "$SIGNED_APK" \
             "$ALIGNED_APK"
-          "$BUILD_TOOLS/apksigner" verify --verbose "$SIGNED_APK"
+
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$SIGNED_APK"
+          echo "Android APK signed successfully: $SIGNED_APK"
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
