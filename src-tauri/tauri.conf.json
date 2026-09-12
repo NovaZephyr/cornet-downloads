@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Cornet",
+  "version": "0.1.0",
+  "identifier": "io.cornet.desktop",
+  "build": {
+    "beforeDevCommand": "",
+    "devUrl": "http://localhost:8080",
+    "frontendDist": "https://cornet.lovable.app"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "title": "Cornet",
+        "label": "main",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "decorations": true,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": null,
+      "capabilities": ["default"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi", "appimage", "deb", "apk"],
+    "publisher": "NovaZephyr",
+    "copyright": "© Cornet",
+    "shortDescription": "Cornet desktop and mobile app",
+    "longDescription": "Cornet application for Windows, Linux and Android.",
+    "category": "SocialNetworking",
+    "icon": ["icons/icon.svg"]
+  }
+}
